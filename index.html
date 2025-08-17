@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4F46E5">
+    <title>服薬管理アプリ</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            min-height: 100vh;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .main-content {
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+        
+        .med-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #4F46E5;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .med-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .med-name {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #1F2937;
+        }
+        
+        .med-time {
+            color: #6B7280;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .take-button {
+            width: 100%;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 48px;
+        }
+        
+        .take-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .take-button:active {
+            transform: scale(0.98);
+        }
+        
+        .take-button.taken {
+            background: linear-gradient(135deg, #6B7280, #4B5563);
+            cursor: default;
+        }
+        
+        .take-button.taken:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: #F3F4F6;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4F46E5;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6B7280;
+            margin-top: 5px;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #6B7280;
+            text-decoration: none;
+            padding: 5px;
+            border-radius: 8px;
+            transition: color 0.2s;
+            min-height: 48px;
+            justify-content: center;
+        }
+        
+        .nav-item.active {
+            color: #4F46E5;
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+        
+        .nav-label {
+            font-size: 10px;
+        }
+        
+        .add-button {
+            position: fixed;
+            right: 20px;
+            bottom: 80px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            transition: transform 0.2s;
+        }
+        
+        .add-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 350px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #1F2937;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #4F46E5;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-secondary {
+            flex: 1;
+            background: #6B7280;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary:hover, .btn-secondary:hover {
+            transform: translateY(-1px);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10B981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            z-index: 2000;
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+            transition: all 0.3s;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="canvas-container" id="header-canvas"></div>
+            <h1>💊 服薬管理</h1>
+            <p>今日の服薬予定</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- 統計カード -->
+            <div class="stats-card">
+                <h3>📊 今日の進捗</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="completed-count">0</div>
+                        <div class="stat-label">服薬完了</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-count">0</div>
+                        <div class="stat-label">予定数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="completion-rate">0%</div>
+                        <div class="stat-label">達成率</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="streak-count">0</div>
+                        <div class="stat-label">連続日数</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 服薬リスト -->
+            <div id="medication-list">
+                <!-- 動的に生成 -->
+            </div>
+        </div>
+        
+        <!-- 底部ナビゲーション -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" data-tab="home">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">ホーム</div>
+            </a>
+            <a href="#" class="nav-item" data-tab="history">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">履歴</div>
+            </a>
+            <a href="#" class="nav-item" data-tab="settings">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">設定</div>
+            </a>
+            <a href="#" class="nav-item" data-tab="share">
+                <div class="nav-icon">👥</div>
+                <div class="nav-label">共有</div>
+            </a>
+        </nav>
+        
+        <!-- 追加ボタン -->
+        <button class="add-button" onclick="openAddModal()">+</button>
+    </div>
+    
+    <!-- 薬追加モーダル -->
+    <div class="modal" id="add-modal">
+        <div class="modal-content">
+            <h3>💊 新しい薬を追加</h3>
+            <form id="add-form">
+                <div class="form-group">
+                    <label class="form-label" for="med-name">薬の名前</label>
+                    <input type="text" id="med-name" class="form-input" placeholder="例: ビタミンC" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="med-time">服薬時間</label>
+                    <input type="time" id="med-time" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="med-note">メモ（任意）</label>
+                    <input type="text" id="med-note" class="form-input" placeholder="食後、水と一緒に など">
+                </div>
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="closeAddModal()">キャンセル</button>
+                    <button type="submit" class="btn-primary">追加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- トースト通知 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // p5.js スケッチ（ヘッダーアニメーション）
+        let headerSketch = function(p) {
+            let particles = [];
+            
+            p.setup = function() {
+                let canvas = p.createCanvas(400, 120);
+                canvas.parent('header-canvas');
+                
+                // パーティクル初期化
+                for(let i = 0; i < 20; i++) {
+                    particles.push({
+                        x: p.random(p.width),
+                        y: p.random(p.height),
+                        vx: p.random(-1, 1),
+                        vy: p.random(-1, 1),
+                        size: p.random(2, 6)
+                    });
+                }
+            };
+            
+            p.draw = function() {
+                p.clear();
+                
+                // パーティクル更新と描画
+                for(let particle of particles) {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    // 画面端で反転
+                    if(particle.x < 0 || particle.x > p.width) particle.vx *= -1;
+                    if(particle.y < 0 || particle.y > p.height) particle.vy *= -1;
+                    
+                    // 描画
+                    p.fill(255, 255, 255, 100);
+                    p.noStroke();
+                    p.ellipse(particle.x, particle.y, particle.size);
+                }
+                
+                // パーティクル間の線
+                for(let i = 0; i < particles.length; i++) {
+                    for(let j = i + 1; j < particles.length; j++) {
+                        let dist = p.dist(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+                        if(dist < 100) {
+                            p.stroke(255, 255, 255, 50 * (1 - dist/100));
+                            p.line(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+                        }
+                    }
+                }
+            };
+            
+            p.windowResized = function() {
+                let container = document.querySelector('.header');
+                if(container) {
+                    p.resizeCanvas(container.offsetWidth, 120);
+                }
+            };
+        };
+        
+        // p5インスタンス作成
+        new p5(headerSketch);
+        
+        // アプリケーション状態
+        let appState = {
+            medications: [],
+            completions: {},
+            streakCount: 0
+        };
+        
+        // ローカルストレージから読み込み
+        function loadData() {
+            const saved = localStorage.getItem('medicationApp');
+            if(saved) {
+                try {
+                    appState = JSON.parse(saved);
+                } catch(e) {
+                    console.error('データ読み込みエラー:', e);
+                }
+            }
+            
+            // デモデータがない場合は追加
+            if(appState.medications.length === 0) {
+                appState.medications = [
+                    {
+                        id: 'demo1',
+                        name: 'ビタミンD',
+                        time: '08:00',
+                        note: '朝食後に',
+                        color: '#4F46E5'
+                    },
+                    {
+                        id: 'demo2',
+                        name: 'オメガ3',
+                        time: '20:00',
+                        note: '夕食後に',
+                        color: '#10B981'
+                    }
+                ];
+                saveData();
+            }
+        }
+        
+        // データ保存
+        function saveData() {
+            localStorage.setItem('medicationApp', JSON.stringify(appState));
+        }
+        
+        // UIレンダリング
+        function renderMedications() {
+            const container = document.getElementById('medication-list');
+            const today = new Date().toDateString();
+            
+            container.innerHTML = '';
+            
+            appState.medications.forEach(med => {
+                const isCompleted = appState.completions[today + '_' + med.id];
+                
+                const card = document.createElement('div');
+                card.className = 'med-card';
+                card.style.borderLeftColor = med.color;
+                
+                card.innerHTML = `
+                    <div class="med-name">${med.name}</div>
+                    <div class="med-time">⏰ ${med.time} ${med.note ? '• ' + med.note : ''}</div>
+                    <button class="take-button ${isCompleted ? 'taken' : ''}" 
+                            onclick="toggleMedication('${med.id}')"
+                            ${isCompleted ? 'disabled' : ''}>
+                        ${isCompleted ? '✓ 服薬完了' : '💊 服薬する'}
+                    </button>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            updateStats();
+        }
+        
+        // 統計更新
+        function updateStats() {
+            const today = new Date().toDateString();
+            const completed = appState.medications.filter(med => 
+                appState.completions[today + '_' + med.id]
+            ).length;
+            const total = appState.medications.length;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById('completed-count').textContent = completed;
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('completion-rate').textContent = rate + '%';
+            document.getElementById('streak-count').textContent = appState.streakCount;
+        }
+        
+        // 服薬記録切り替え
+        function toggleMedication(medId) {
+            const today = new Date().toDateString();
+            const key = today + '_' + medId;
+            
+            if(!appState.completions[key]) {
+                appState.completions[key] = new Date().toISOString();
+                showToast('服薬を記録しました！');
+                
+                // 通知権限があれば通知
+                if(Notification.permission === 'granted') {
+                    const med = appState.medications.find(m => m.id === medId);
+                    new Notification('服薬完了', {
+                        body: `${med.name} の服薬を記録しました`,
+                        icon: 'icon-192.png'
+                    });
+                }
+                
+                saveData();
+                renderMedications();
+            }
+        }
+        
+        // モーダル開閉
+        function openAddModal() {
+            document.getElementById('add-modal').style.display = 'block';
+        }
+        
+        function closeAddModal() {
+            document.getElementById('add-modal').style.display = 'none';
+            document.getElementById('add-form').reset();
+        }
+        
+        // 薬追加
+        document.getElementById('add-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('med-name').value;
+            const time = document.getElementById('med-time').value;
+            const note = document.getElementById('med-note').value;
+            
+            const newMed = {
+                id: 'med_' + Date.now(),
+                name: name,
+                time: time,
+                note: note,
+                color: getRandomColor()
+            };
+            
+            appState.medications.push(newMed);
+            saveData();
+            renderMedications();
+            closeAddModal();
+            showToast('薬を追加しました！');
+        });
+        
+        // ランダムカラー生成
+        function getRandomColor() {
+            const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // トースト表示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 通知権限要求
+        function requestNotificationPermission() {
+            if('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if(permission === 'granted') {
+                        showToast('通知が有効になりました！');
+                    }
+                });
+            }
+        }
+        
+        // モーダル外クリックで閉じる
+        document.getElementById('add-modal').addEventListener('click', function(e) {
+            if(e.target === this) {
+                closeAddModal();
+            }
+        });
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            renderMedications();
+            requestNotificationPermission();
+            
+            // Service Worker登録
+            if('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').then(function(registration) {
+                    console.log('SW registered:', registration);
+                }).catch(function(error) {
+                    console.log('SW registration failed:', error);
+                });
+            }
+        });
+        
+        // タブ切り替え（簡易実装）
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // アクティブ状態を切り替え
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                
+                const tab = this.dataset.tab;
+                switch(tab) {
+                    case 'home':
+                        // ホーム表示（既に表示中）
+                        break;
+                    case 'history':
+                        showToast('履歴機能は開発中です');
+                        break;
+                    case 'settings':
+                        showToast('設定機能は開発中です');
+                        break;
+                    case 'share':
+                        showToast('共有機能は開発中です');
+                        break;
+                }
+            });
+        });
+        
+        // レスポンシブ対応
+        window.addEventListener('resize', function() {
+            setTimeout(() => {
+                // p5.jsキャンバスのリサイズは自動で処理される
+            }, 100);
+        });
+    </script>
+</body>
+</html>
